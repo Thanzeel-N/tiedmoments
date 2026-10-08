@@ -34,6 +34,10 @@ The 500+ wedding claim and travel availability are supplied by the client. No in
 
 Processed with the built-in imagegen tool (background-extraction). Prompt: remove the brown background from the supplied Tied Moments logo, preserve the original white brush lettering, output transparent PNG with a small margin and no added decoration.
 
+## Hero component
+
+The hero uses the supplied animated photo-stack design, adapted to the existing wedding photos and original headline, description, and button wording. Tailwind CSS v4, Framer Motion, and a shadcn-compatible Button are installed. Reusable components live in `components/ui`; styles remain in `app/globals.css`. See `components/README.md` for configuration, props, and adding more shadcn components.
+
 ## Checks
 
 ```sh

@@ -18,11 +18,19 @@ async function revealFullPage() {
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 await page.goto('http://127.0.0.1:3001', { waitUntil: 'networkidle' });
-await page.getByRole('button', { name: 'Pause slideshow' }).click();
+await page.locator('.photo-fan-card').first().waitFor();
+await page.waitForTimeout(2200);
 await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(1200);
 await page.screenshot({ path: '.qa/desktop.png' });
+assert.equal(await page.locator('.photo-fan-card').count(), 5);
+assert.equal(await page.locator('.hero h1').innerText(), 'Your day.\nAs it felt.');
+await page.getByRole('button', { name: 'Open A little closer to forever', exact: true }).focus();
+await page.keyboard.press('Enter');
+assert.equal(await page.getByRole('dialog').isVisible(), true);
+await page.keyboard.press('Escape');
+assert.equal(await page.getByRole('link', { name: 'View our work', exact: true }).getAttribute('href'), '#work');
 assert.equal(await page.locator('.gallery-card').count(), 17);
 assert.equal(await page.locator('#work').evaluate(el => el.previousElementSibling.id), 'experience');
 await page.getByRole('button', { name: 'Portraits', exact: true }).click();
@@ -64,7 +72,8 @@ for (const width of [320, 390, 768, 1440]) {
 }
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto('http://127.0.0.1:3001', { waitUntil: 'networkidle' });
-await page.getByRole('button', { name: 'Pause slideshow' }).click();
+await page.locator('.photo-fan-card').first().waitFor();
+await page.waitForTimeout(2200);
 await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 await page.waitForTimeout(1200);
 await page.screenshot({ path: '.qa/mobile.png' });

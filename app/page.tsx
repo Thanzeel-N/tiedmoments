@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { Menu, X, Plus, ChevronLeft, ChevronRight, Pause, Play, MessageCircle } from 'lucide-react';
+import { Menu, X, Plus, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { PhotoGallery } from '@/components/ui/gallery';
+import ParallaxUnfurlingGallery from '@/components/ui/3d-parallax-unfurling-gallery';
 import blurData from './blur-data.json';
 
 const photos = [
@@ -24,14 +26,12 @@ const photos = [
   { key: 'architecture', src: '/images/architecture.webp', title: 'A beautiful beginning', category: 'Portraits', alt: 'Bride in red on the staircase of a white building in an editorial composition', blurDataURL: blurData.architecture },
   { key: 'sunshine', src: '/images/sunshine.webp', title: 'Joy in every frame', category: 'Celebrations', alt: 'Collection of joyful portraits of a bride celebrating in yellow', blurDataURL: blurData.sunshine },
 ];
-const slides = [photos[0], photos[3], photos[1]];
+const heroPhotos = [photos[1], photos[3], photos[0], photos[2], photos[5]];
 const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/[\s()+-]/g, '') || '919037867720';
 const whatsappNumber = /^[1-9]\d{7,14}$/.test(rawNumber) ? rawNumber : '';
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [slide, setSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState('All moments');
   const [lightbox, setLightbox] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -45,12 +45,6 @@ export default function Home() {
     document.querySelectorAll('.reveal').forEach(el => { if (!reduced) el.classList.add('will-reveal'); observer.observe(el); });
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = setInterval(() => { if (!document.hidden) setSlide(s => (s + 1) % slides.length); }, 6500);
-    return () => clearInterval(timer);
-  }, [paused]);
 
   useEffect(() => {
     if (lightbox !== null) {
@@ -99,32 +93,15 @@ export default function Home() {
     </header>
 
     <main id="main">
-      <section className="hero" id="home" aria-label="Wedding photography by Tied Moments">
-        <div className="hero-images">
-          {slides.map((photo, i) => (
-            <div key={photo.src} className={`hero-image ${slide === i ? 'active' : ''}`} aria-hidden={slide !== i}>
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                sizes="(max-width: 700px) 100vw, 70vw"
-                preload={i === 0}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchPriority={i === 0 ? 'high' : 'auto'}
-                placeholder="blur"
-                blurDataURL={photo.blurDataURL}
-                quality={85}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="hero-copy">
-          <p className="eyebrow hero-enter">Wedding photography</p>
-          <h1 className="hero-enter">Your day.<br /><span>As it felt.</span></h1>
-          <p className="hero-description hero-enter">Honest moments. Beautifully kept.</p>
-          <a className="button button-light hero-enter" href="#work">View our work</a>
-        </div>
-        <div className="hero-bottom"><a href="#work" className="scroll-cue">Selected moments</a><div className="slide-controls"><span className="slide-number">0{slide + 1}</span>{slides.map((photo, i) => <button key={photo.src} className={`slide-dot ${slide === i ? 'selected' : ''}`} aria-label={`Show photograph ${i + 1}`} aria-pressed={slide === i} onClick={() => setSlide(i)} />)}<span className="slide-total">03</span><button className="icon-button pause" aria-label={paused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setPaused(!paused)}>{paused ? <Play size={14} /> : <Pause size={14} />}</button></div></div>
+      <section className="hero hero-photo-stack" id="home" aria-label="Wedding photography by Tied Moments">
+        <PhotoGallery photos={heroPhotos} onPhotoSelect={photo => setLightbox(photos.findIndex(item => item.src === photo.src))}>
+          <div className="hero-copy">
+            <p className="eyebrow hero-enter">Wedding photography</p>
+            <h1 className="hero-enter">Your day.<br /><span>As it felt.</span></h1>
+            <p className="hero-description hero-enter">Honest moments. Beautifully kept.</p>
+          </div>
+        </PhotoGallery>
+        <a href="#work" className="stack-scroll-cue">Selected moments</a>
       </section>
 
       <div className="facts"><p><strong>500+</strong> weddings captured</p><p>Available wherever you need us</p></div>
@@ -200,6 +177,16 @@ export default function Home() {
 
       <section id="work" className="work section-pad">
         <div className="section-heading reveal"><h2>Selected work</h2><span>{photos.length} photographs</span></div>
+        <div className="reveal my-8">
+          <ParallaxUnfurlingGallery
+            images={photos.map(p => p.src)}
+            isStandalone={false}
+            onPhotoClick={(src) => {
+              const idx = photos.findIndex(p => p.src === src);
+              if (idx !== -1) setLightbox(idx);
+            }}
+          />
+        </div>
         <div className="filters" role="group" aria-label="Filter photographs">{['All moments', 'Weddings', 'Portraits', 'Celebrations'].map(category => <button key={category} className={filter === category ? 'active' : ''} aria-pressed={filter === category} onClick={() => setFilter(category)}>{category}{category === 'All moments' && <span>{photos.length}</span>}</button>)}</div>
         <div className="gallery">
           {shown.map(photo => (
