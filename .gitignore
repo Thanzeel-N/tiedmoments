@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+.env*.local
+*.tsbuildinfo
+.qa/
+contact-sheet.jpg
+.npm-cache/
+logo-preview.png
