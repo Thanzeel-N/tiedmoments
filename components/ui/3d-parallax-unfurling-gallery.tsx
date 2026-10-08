@@ -19,46 +19,61 @@ const UNSPLASH_IMAGES = [
   "https://cdn.21st.dev/assets/mirror/02/0232d63e3e0cb8d3599a77e29f87f8ec4b9fadfd031592296b3f19a730a5348c.jpg",
   "https://cdn.21st.dev/assets/mirror/56/562b212caa6ec06d8b0b313660dac6aa0bbfb729092cc4f16d04558a319af6b1.jpg",
   "https://cdn.21st.dev/assets/mirror/02/02cbcd62720734d469f2ea8e5ed7a212e18cb05e73457445b4d755ad0ae1fcd8.jpg",
-  "https://images.unsplash.com/photo-1550614000-4b95d4ed798a?auto=format&fit=crop&w=600&q=80",
-  "https://cdn.21st.dev/assets/mirror/c4/c42df7c9c444a1189dad0570c0d01986454cd6a10eaf253a9ab40eb921a5bae5.jpg",
   "https://cdn.21st.dev/assets/mirror/27/275fbf3f84c5258c7a8235a8a47022f847d0f408c950288c532aefa83d072a2c.jpg",
   "https://cdn.21st.dev/assets/mirror/7e/7e2fb073870b2f578a37a693b1e0c9402a98201149509b54da2f86a2ee6abf5e.jpg",
   "https://cdn.21st.dev/assets/mirror/3d/3d74651780292fb5a2ba23e525d9d09860bb83fbfafc7ede17b8e3662d7b1022.jpg",
 ];
+
+export interface GalleryPhotoItem {
+  src: string;
+  alt?: string;
+  title?: string;
+}
 
 export interface ImageCardProps {
   src: string;
   onLoad?: () => void;
   onClick?: () => void;
   alt?: string;
+  title?: string;
 }
 
-const ImageCard = ({ src, onLoad, onClick, alt = "Gallery Asset" }: ImageCardProps) => {
+const ImageCard = ({
+  src,
+  onLoad,
+  onClick,
+  title,
+  alt = "Wedding photograph",
+}: ImageCardProps) => {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className="w-full h-[200px] sm:h-[300px] md:h-[400px] flex-shrink-0 bg-[#111] transition-transform duration-300 hover:scale-[1.02] cursor-pointer relative will-change-transform backface-hidden preserve-3d rounded-lg overflow-hidden"
+      aria-label={title ? `View ${title}` : "View wedding photograph"}
+      className="parallax-photo-card w-full h-[200px] sm:h-[300px] md:h-[400px] flex-shrink-0 bg-[#e3e0dc] transition-transform duration-300 hover:scale-[1.03] cursor-pointer relative will-change-transform backface-hidden preserve-3d rounded-lg overflow-hidden border-0 p-0 text-left group focus-visible:outline-2 focus-visible:outline-[#777]"
     >
       <img
         src={src}
         alt={alt}
         loading="lazy"
         onLoad={onLoad}
-        className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-300"
+        className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity duration-300"
       />
-    </div>
+    </button>
   );
 };
 
 export interface ParallaxGalleryProps {
   images?: string[];
+  photos?: GalleryPhotoItem[];
   isStandalone?: boolean;
   className?: string;
   onPhotoClick?: (src: string, index: number) => void;
 }
 
 export default function Component({
-  images = UNSPLASH_IMAGES,
+  images,
+  photos,
   isStandalone = true,
   className = "",
   onPhotoClick,
@@ -78,15 +93,19 @@ export default function Component({
     return () => clearTimeout(t);
   }, []);
 
-  const imageList = useMemo(() => {
-    return images && images.length > 0 ? images : UNSPLASH_IMAGES;
-  }, [images]);
+  const itemsList = useMemo<GalleryPhotoItem[]>(() => {
+    if (photos && photos.length > 0) return photos;
+    if (images && images.length > 0) {
+      return images.map(src => ({ src, alt: "Wedding photograph" }));
+    }
+    return UNSPLASH_IMAGES.map(src => ({ src, alt: "Gallery Asset" }));
+  }, [photos, images]);
 
   const colMedia = useMemo(() => {
-    const col1Base = imageList.filter((_, i) => i % 4 === 0);
-    const col2Base = imageList.filter((_, i) => i % 4 === 1);
-    const col3Base = imageList.filter((_, i) => i % 4 === 2);
-    const col4Base = imageList.filter((_, i) => i % 4 === 3);
+    const col1Base = itemsList.filter((_, i) => i % 4 === 0);
+    const col2Base = itemsList.filter((_, i) => i % 4 === 1);
+    const col3Base = itemsList.filter((_, i) => i % 4 === 2);
+    const col4Base = itemsList.filter((_, i) => i % 4 === 3);
 
     return {
       col1: [...col1Base, ...col1Base],
@@ -94,9 +113,9 @@ export default function Component({
       col3: [...col3Base, ...col3Base],
       col4: [...col4Base, ...col4Base],
     };
-  }, [imageList]);
+  }, [itemsList]);
 
-  // LINKED SCROLL: Tells Framer Motion container if standalone, or uses window scroll if embedded
+  // LINKED SCROLL: Container for standalone, or window scroll for embedded
   const { scrollYProgress } = useScroll({
     target: containerRef,
     ...(isStandalone ? { container: scrollWrapperRef } : {}),
@@ -109,11 +128,10 @@ export default function Component({
     mass: 0.5,
   });
 
-  // Banner animations
+  // Banner animations (No borders)
   const bannerWidth = useTransform(smoothProgress, [0, 0.15], ["90vw", "100vw"]);
   const bannerHeight = useTransform(smoothProgress, [0, 0.15], ["80vh", "100vh"]);
-  const bannerRadius = useTransform(smoothProgress, [0, 0.15], ["48px", "0px"]);
-  const bannerBorderWidth = useTransform(smoothProgress, [0, 0.15], ["4px", "0px"]);
+  const bannerRadius = useTransform(smoothProgress, [0, 0.15], ["40px", "0px"]);
 
   // 3D Matrix animations
   const rotateY = useTransform(smoothProgress, [0.15, 1], [-45, -8]);
@@ -130,7 +148,7 @@ export default function Component({
   const content = (
     <section
       ref={containerRef}
-      className={`relative w-full ${isStandalone ? "h-[600vh]" : "h-[350vh]"} bg-[#050505] text-white font-sans selection:bg-white selection:text-black ${className}`}
+      className={`relative w-full ${isStandalone ? "h-[600vh]" : "h-[320vh]"} bg-[#fafaf8] text-[#242424] font-sans border-0 ${className}`}
     >
       <div className="sticky top-0 h-screen w-full flex justify-center items-center overflow-hidden">
         <motion.div
@@ -138,18 +156,16 @@ export default function Component({
             width: bannerWidth,
             height: bannerHeight,
             borderRadius: bannerRadius,
-            borderWidth: bannerBorderWidth,
-            borderColor: "#2c2738",
           }}
-          className="relative bg-black overflow-hidden flex items-center justify-center max-w-[1920px] mx-auto will-change-transform backface-hidden preserve-3d"
+          className="relative bg-[#fafaf8] overflow-hidden flex items-center justify-center max-w-[1920px] mx-auto will-change-transform backface-hidden preserve-3d border-0 shadow-none"
         >
           <div
             className="absolute inset-0 flex justify-center items-center pointer-events-none"
             style={{ perspective: "1000px" }}
           >
-            {/* Ambient Shadow Box Masking */}
-            <div className="absolute inset-0 z-20 shadow-[inset_0_100px_150px_-50px_rgba(0,0,0,1),inset_0_-100px_150px_-50px_rgba(0,0,0,1)]" />
-            <div className="absolute inset-0 z-20 shadow-[inset_150px_0_150px_-50px_rgba(0,0,0,1),inset_-150px_0_150px_-50px_rgba(0,0,0,1)]" />
+            {/* Ambient Shadow Box Masking matching the website background (#fafaf8) with no borders */}
+            <div className="absolute inset-0 z-20 pointer-events-none shadow-[inset_0_100px_140px_-40px_rgba(250,250,248,0.95),inset_0_-100px_140px_-40px_rgba(250,250,248,0.95)]" />
+            <div className="absolute inset-0 z-20 pointer-events-none shadow-[inset_120px_0_140px_-40px_rgba(250,250,248,0.95),inset_-120px_0_140px_-40px_rgba(250,250,248,0.95)]" />
 
             {/* Parallax Image Grid Matrix */}
             <motion.div
@@ -163,45 +179,53 @@ export default function Component({
               className="flex gap-4 md:gap-6 justify-center items-center w-[120vw] h-[150vh] origin-center opacity-100 will-change-transform backface-hidden"
             >
               <motion.div style={{ y: yCol1 }} className="flex flex-col gap-4 md:gap-6 w-[22vw] min-w-[200px] pointer-events-auto">
-                {colMedia.col1.map((src, index) => (
+                {colMedia.col1.map((item, index) => (
                   <ImageCard
                     key={`col1-${index}`}
-                    src={src}
+                    src={item.src}
+                    alt={item.alt}
+                    title={item.title}
                     onLoad={handleItemLoad}
-                    onClick={() => onPhotoClick?.(src, index)}
+                    onClick={() => onPhotoClick?.(item.src, index)}
                   />
                 ))}
               </motion.div>
 
               <motion.div style={{ y: yCol2 }} className="flex flex-col gap-4 md:gap-6 w-[22vw] min-w-[200px] pointer-events-auto">
-                {colMedia.col2.map((src, index) => (
+                {colMedia.col2.map((item, index) => (
                   <ImageCard
                     key={`col2-${index}`}
-                    src={src}
+                    src={item.src}
+                    alt={item.alt}
+                    title={item.title}
                     onLoad={handleItemLoad}
-                    onClick={() => onPhotoClick?.(src, index)}
+                    onClick={() => onPhotoClick?.(item.src, index)}
                   />
                 ))}
               </motion.div>
 
               <motion.div style={{ y: yCol3 }} className="flex flex-col gap-4 md:gap-6 w-[22vw] min-w-[200px] pointer-events-auto">
-                {colMedia.col3.map((src, index) => (
+                {colMedia.col3.map((item, index) => (
                   <ImageCard
                     key={`col3-${index}`}
-                    src={src}
+                    src={item.src}
+                    alt={item.alt}
+                    title={item.title}
                     onLoad={handleItemLoad}
-                    onClick={() => onPhotoClick?.(src, index)}
+                    onClick={() => onPhotoClick?.(item.src, index)}
                   />
                 ))}
               </motion.div>
 
               <motion.div style={{ y: yCol4 }} className="flex flex-col gap-4 md:gap-6 w-[22vw] min-w-[200px] pointer-events-auto">
-                {colMedia.col4.map((src, index) => (
+                {colMedia.col4.map((item, index) => (
                   <ImageCard
                     key={`col4-${index}`}
-                    src={src}
+                    src={item.src}
+                    alt={item.alt}
+                    title={item.title}
                     onLoad={handleItemLoad}
-                    onClick={() => onPhotoClick?.(src, index)}
+                    onClick={() => onPhotoClick?.(item.src, index)}
                   />
                 ))}
               </motion.div>
@@ -216,7 +240,7 @@ export default function Component({
     return (
       <div 
         ref={scrollWrapperRef}
-        className="w-full h-screen overflow-y-auto overflow-x-hidden bg-[#050505]"
+        className="w-full h-screen overflow-y-auto overflow-x-hidden bg-[#fafaf8]"
       >
         {content}
       </div>

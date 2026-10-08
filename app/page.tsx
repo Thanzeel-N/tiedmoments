@@ -32,7 +32,6 @@ const whatsappNumber = /^[1-9]\d{7,14}$/.test(rawNumber) ? rawNumber : '';
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [filter, setFilter] = useState('All moments');
   const [lightbox, setLightbox] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
@@ -67,9 +66,6 @@ export default function Home() {
     const data = new FormData(form.current!);
     return `Hi Tied Moments! I'm ${data.get('name')}. I'd like to enquire about wedding photography.\nDate: ${data.get('date') || 'To be decided'}\nLocation: ${data.get('location') || 'To be decided'}\nPlease share your availability and packages.`;
   }
-
-  const filtered = photos.filter(p => filter === 'All moments' || p.category === filter);
-  const shown = filtered;
 
   return <>
     <a className="skip-link" href="#main">Skip to content</a>
@@ -175,38 +171,17 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="work" className="work section-pad">
+      <section id="work" className="work section-pad" aria-label="Selected work gallery">
         <div className="section-heading reveal"><h2>Selected work</h2><span>{photos.length} photographs</span></div>
-        <div className="reveal my-8">
+        <div className="reveal my-6 border-0">
           <ParallaxUnfurlingGallery
-            images={photos.map(p => p.src)}
+            photos={photos}
             isStandalone={false}
             onPhotoClick={(src) => {
               const idx = photos.findIndex(p => p.src === src);
               if (idx !== -1) setLightbox(idx);
             }}
           />
-        </div>
-        <div className="filters" role="group" aria-label="Filter photographs">{['All moments', 'Weddings', 'Portraits', 'Celebrations'].map(category => <button key={category} className={filter === category ? 'active' : ''} aria-pressed={filter === category} onClick={() => setFilter(category)}>{category}{category === 'All moments' && <span>{photos.length}</span>}</button>)}</div>
-        <div className="gallery">
-          {shown.map(photo => (
-            <button key={photo.src} className="gallery-card" onClick={() => setLightbox(photos.indexOf(photo))} aria-label={`View ${photo.title}`}>
-              <div className="photo-wrap">
-                <Image
-                  src={photo.src}
-                  alt={photo.alt}
-                  fill
-                  sizes="(max-width: 600px) 33vw, (max-width: 1000px) 25vw, 18vw"
-                  loading="lazy"
-                  decoding="async"
-                  placeholder="blur"
-                  blurDataURL={photo.blurDataURL}
-                  quality={80}
-                />
-                <span className="photo-open"><Plus size={22} strokeWidth={1} /></span>
-              </div>
-            </button>
-          ))}
         </div>
       </section>
 
